@@ -11,9 +11,9 @@ enum Gear {
 };
 
 struct ReceiverData {
-    /// in range 0.0-1.0
+    /// in vesc friendly range
     float throttle = 0;
-    /// in range 0.0-1.0
+    /// in vesc friendly range
     float steering = 0;
     Gear gearSelector = undefined;
     bool autonomous = 0;
