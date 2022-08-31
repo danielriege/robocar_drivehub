@@ -17,35 +17,35 @@ public:
         serial.set_option(serial_port_base::baud_rate(baud_rate));
     }
 
-    uint8_t read()
-    {
-        using namespace boost;
-        uint8_t c;
-        asio::read(serial,asio::buffer(&c,1));
-        return c;
-    }
+    // uint8_t read()
+    // {
+    //     using namespace boost;
+    //     uint8_t c;
+    //     asio::read(serial,asio::buffer(&c,1));
+    //     return c;
+    // }
 
-    std::vector<uint8_t> read(const size_t size){
-        using namespace boost;
-        std::vector<uint8_t> buf(size);
-        asio::read(serial, asio::buffer(buf.data(),size));
-        return buf;
-    }
+    // std::vector<uint8_t> read(const size_t size){
+    //     using namespace boost;
+    //     std::vector<uint8_t> buf(size);
+    //     asio::read(serial, asio::buffer(buf.data(),size));
+    //     return buf;
+    // }
 
-    template<typename T>
-    void readInto(T& obj){
-        boost::asio::read(serial, boost::asio::buffer(&obj, sizeof(T)));
-    }
+    // template<typename T>
+    // void readInto(T& obj){
+    //     boost::asio::read(serial, boost::asio::buffer(&obj, sizeof(T)));
+    // }
     
-    size_t available() {
-        int value = 0;
-        if (::ioctl(serial.lowest_layer().native_handle(), FIONREAD, &value) == 0) {
-            boost::system::error_code error = boost::system::error_code(errno, boost::asio::error::get_system_category());
-            boost::throw_exception((boost::system::system_error(error)));
-        }
-        printf("%d\n", value);
-        return static_cast<size_t>(value);
-    }
+    // size_t available() {
+    //     int value = 0;
+    //     if (::ioctl(serial.lowest_layer().native_handle(), FIONREAD, &value) == 0) {
+    //         boost::system::error_code error = boost::system::error_code(errno, boost::asio::error::get_system_category());
+    //         boost::throw_exception((boost::system::system_error(error)));
+    //     }
+    //     printf("%d\n", value);
+    //     return static_cast<size_t>(value);
+    // }
     
     void handleRecieve(const boost::system::error_code& error, size_t bytes_transferred) {
         if (bytes_transferred > 0) {
@@ -72,12 +72,8 @@ public:
         //io.run();
     }
     
-    void writeByte(uint8_t data) {
-        
-    }
-    
     void writeBytes(uint8_t* data, int len) {
-        
+        serial.write_some(boost::asio::buffer(data, len));
     }
 
 private:

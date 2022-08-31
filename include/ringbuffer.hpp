@@ -6,8 +6,9 @@
 #include <array>
 
 template <size_t SIZE_ = 256>
-class MyRingBuffer
+class RingBuffer
 {
+public:
     std::array<unsigned char, SIZE_> buffer;
     int writePos;
     int readPos;
@@ -16,7 +17,7 @@ public:
     /**
      * @brief Constructor
      **/
-    MyRingBuffer() : writePos(0), readPos(0) {}
+    RingBuffer() : writePos(0), readPos(0) {}
 
     /**
      * @brief retrieves the object on position pos in the RingBuffer
