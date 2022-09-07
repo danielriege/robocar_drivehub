@@ -11,10 +11,14 @@ class Serial
 {
 public:
     Serial(const std::string& port, const unsigned int baud_rate)
-    : io(), serial(io,port)
+    try : io(), serial(io,port)
     {
         using namespace boost::asio;
         serial.set_option(serial_port_base::baud_rate(baud_rate));
+    }
+    catch (boost::system::system_error err) {
+        printf("Serial: device file '%s' not found. Terminating.\n", port.c_str());
+        exit(1);
     }
 
     // uint8_t read()

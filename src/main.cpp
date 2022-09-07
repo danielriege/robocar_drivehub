@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
         // FROM HERE ONLY EXECUTED IF REMOTE IS ON
         if (lastReceiverData.autonomous) {
             // set commands from iOS device
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastControlMsgTime) > TIMEOUT_SWIFTROBOTM || swiftrobotStatus != CONNECTED) {
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastControlMsgTime) > TIMEOUT_SWIFTROBOTM || swiftrobotStatus != internal_msg::status_t::CONNECTED) {
                 failsafe(&vesc);
                 continue;
             }
