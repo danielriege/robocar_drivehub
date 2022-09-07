@@ -4,6 +4,7 @@
 #include "receiver_data.hpp"
 
 #include "swiftrobotc/swiftrobotc.h"
+#include "swiftrobotc/msgs.h"
 
 #include <unistd.h>
 #include <condition_variable>

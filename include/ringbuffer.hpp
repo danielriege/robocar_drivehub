@@ -3,6 +3,7 @@
 
 #undef min
 #undef max
+#include <stdio.h>
 #include <array>
 
 template <size_t SIZE_ = 256>
