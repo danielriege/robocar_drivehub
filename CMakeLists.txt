@@ -19,4 +19,4 @@ target_link_libraries(robocar_drivehub Boost::thread swiftrobotc)
 target_include_directories(robocar_drivehub PRIVATE include/ )
 
 
-
+install(TARGETS robocar_drivehub DESTINATION bin)

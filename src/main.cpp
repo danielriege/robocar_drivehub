@@ -21,6 +21,18 @@ using namespace std::chrono_literals;
 #define DBG_PRINT(x...) //
 #endif
 
+#ifdef __linux__
+#ifdef __arm__
+// on raspberry
+#define SERIAL_RECEIVER "/dev/ttySC0"
+#define SERIAL_VESC "/dev/ttySC1"
+#else
+// on other linux machine with serial adapter
+#define SERIAL_RECEIVER "/dev/ttyUSB0"
+#define SERIAL_VESC "/dev/ttyUSB1"
+#endif
+#endif
+
 // swiftrobotm channels
 #define SR_INTERNAL (uint16_t)0
 #define SR_DRIVE (uint16_t)1
@@ -93,8 +105,8 @@ void swiftrobotmReceivedDrive(control_msg::Drive msg) {
 
 int main(int argc, char** argv) {
     // factory
-    Receiver receiver("/dev/ttyUSB0", 115200);
-    Vesc vesc("/dev/ttyUSB1", 115200);
+    Receiver receiver(SERIAL_RECEIVER, 115200);
+    Vesc vesc(SERIAL_VESC, 115200);
     SwiftRobotClient swiftrobotClient(2345); // usb connection
 
     receiver.setPacketReceivedCallback(&receivedSumDPacket);
