@@ -1,7 +1,7 @@
 #include "vesc.hpp"
 #include "crc.h"
 
-//#define DEBUGGING
+#define DEBUGGING
 #ifdef DEBUGGING
 #define DBG_PRINT(x...) printf(x)
 #else

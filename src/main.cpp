@@ -34,9 +34,9 @@ using namespace std::chrono_literals;
 #endif
 
 // swiftrobotm channels
-#define SR_INTERNAL (uint16_t)0
-#define SR_DRIVE (uint16_t)1
-#define SR_STATUS (uint16_t)2
+#define SR_INTERNAL (uint16_t) 0x0
+#define SR_DRIVE (uint16_t) 0x01
+#define SR_STATUS (uint16_t) 0x11
 
 #define TIMEOUT_SWIFTROBOTM 30ms
 #define TIMEOUT_RECEIVER 30ms
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
         std::unique_lock<std::mutex> l(m);
         if(cv.wait_for(l, TIMEOUT_RECEIVER) == std::cv_status::timeout) {
             //timeout
-            failsafe(vesc);
+//            failsafe(vesc);
             continue;
         }
         // ****************
@@ -150,15 +150,15 @@ int main(int argc, char** argv) {
         if (lastReceiverData.autonomous) {
             // set commands from iOS device
             if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastControlMsgTime) > TIMEOUT_SWIFTROBOTM || swiftrobotStatus != internal_msg::status_t::CONNECTED) {
-                failsafe(vesc);
+//                failsafe(vesc);
                 continue;
             }
-            vesc->setServoPos(lastControlMsg.steer);
+//            vesc->setServoPos(lastControlMsg.steer);
         } else {
             // remote uses direct control
-            vesc->setServoPos(lastReceiverData.steering);
+//            vesc->setServoPos(lastReceiverData.steering);
             float throttle = (lastReceiverData.gearSelector != reverse) ? lastReceiverData.throttle : -lastReceiverData.throttle;
-            vesc->setDutyCycle(throttle);
+//            vesc->setDutyCycle(throttle);
         }
     }
 }
