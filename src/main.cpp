@@ -43,12 +43,14 @@ using namespace std::chrono_literals;
 
 #define STEERING_MAX_DELTA 0.3
 #define STEERING_OFFSET 0.1
-#define THROTTLE_MAX_DUTY_CYCLE 0.1
+#define THROTTLE_MAX_DUTY_CYCLE 0.2
 #define FAILSAFE_STEERING 0.6
 #define FAILSAFE_DUTYCYCLE 0.0
 
 // global properties
-VescData lastVescData;
+std::unique_ptr<SwiftRobotClient> swiftrobotclient;
+std::unique_ptr<Vesc> vesc;
+std::unique_ptr<Receiver> receiver;
 ReceiverData lastReceiverData;
 
 control_msg::Drive lastControlMsg;
@@ -68,7 +70,7 @@ float convertThrottleRange(float receiverValue) {
     return (receiverValue * 0.5 + 0.5) * THROTTLE_MAX_DUTY_CYCLE;
 }
 
-void failsafe(Vesc* vesc) {
+void failsafe(std::unique_ptr<Vesc> &vesc) {
     vesc->setServoPos(FAILSAFE_STEERING);
     vesc->setDutyCycle(FAILSAFE_DUTYCYCLE);
 }
@@ -76,7 +78,15 @@ void failsafe(Vesc* vesc) {
 // callbacks
 
 void receivedVescStatus(VescData data) {
-    lastVescData = data;
+    state_msg::VescStatus msg;
+    msg.mosfet_temp = data.mosfet_temp;
+    msg.motor_temp = data.motor_temp;
+    msg.rpm = data.rpm;
+    msg.battery_voltage = data.voltage;
+    msg.tachometer = data.ticks;
+    msg.tachometer_abs = data.ticksAbs;
+    swiftrobotclient->publish(SR_STATUS, msg);
+
     DBG_PRINT("mosfet temp: %f, motor temp: %f, rpm: %d, voltage: %f, tachometer: %d, tachometer abs: %d \n",
         data.mosfet_temp, data.motor_temp, data.rpm, data.voltage, data.ticks, data.ticksAbs);
 }
@@ -105,42 +115,50 @@ void swiftrobotmReceivedDrive(control_msg::Drive msg) {
 
 int main(int argc, char** argv) {
     // factory
-    Receiver receiver(SERIAL_RECEIVER, 115200);
-    Vesc vesc(SERIAL_VESC, 115200);
-    SwiftRobotClient swiftrobotClient(2345); // usb connection
+    receiver = std::make_unique<Receiver>(SERIAL_RECEIVER, 115200);
+    vesc = std::make_unique<Vesc>(SERIAL_VESC, 115200);
+    swiftrobotclient = std::make_unique<SwiftRobotClient>(2345); // usb connection
 
-    receiver.setPacketReceivedCallback(&receivedSumDPacket);
-    receiver.start();
+    receiver->setPacketReceivedCallback(&receivedSumDPacket);
+    receiver->start();
 
-    vesc.setStatusReceivedCallback(&receivedVescStatus);
-    vesc.start();
+    vesc->setStatusReceivedCallback(&receivedVescStatus);
+    vesc->start();
 
-    swiftrobotClient.subscribe<internal_msg::UpdateMsg>(SR_INTERNAL, &swiftrobotmReceivedInternal);
-    swiftrobotClient.subscribe<control_msg::Drive>(SR_DRIVE, &swiftrobotmReceivedDrive);
-    swiftrobotClient.start();
+    swiftrobotclient->subscribe<internal_msg::UpdateMsg>(SR_INTERNAL, &swiftrobotmReceivedInternal);
+    swiftrobotclient->subscribe<control_msg::Drive>(SR_DRIVE, &swiftrobotmReceivedDrive);
+    swiftrobotclient->start();
 
     // MAIN LOOP
     while (1) {
+        // ****************
+        // get data
+        // ****************
+        // ask for vesc status; response comes async
+        vesc->requestState();
         // wait for receiver
         std::unique_lock<std::mutex> l(m);
         if(cv.wait_for(l, TIMEOUT_RECEIVER) == std::cv_status::timeout) {
             //timeout
-            failsafe(&vesc);
+            failsafe(vesc);
             continue;
         }
+        // ****************
+        // send data
+        // ****************
         // FROM HERE ONLY EXECUTED IF REMOTE IS ON
         if (lastReceiverData.autonomous) {
             // set commands from iOS device
             if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - lastControlMsgTime) > TIMEOUT_SWIFTROBOTM || swiftrobotStatus != internal_msg::status_t::CONNECTED) {
-                failsafe(&vesc);
+                failsafe(vesc);
                 continue;
             }
-            vesc.setServoPos(lastControlMsg.steer);
+            vesc->setServoPos(lastControlMsg.steer);
         } else {
             // remote uses direct control
-            vesc.setServoPos(lastReceiverData.steering);
+            vesc->setServoPos(lastReceiverData.steering);
             float throttle = (lastReceiverData.gearSelector != reverse) ? lastReceiverData.throttle : -lastReceiverData.throttle;
-            vesc.setDutyCycle(throttle);
+            vesc->setDutyCycle(throttle);
         }
     }
 }
