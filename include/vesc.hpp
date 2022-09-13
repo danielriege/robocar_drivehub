@@ -36,6 +36,7 @@ private:
     void sendPaket(uint8_t* payload, int len);
     void uartReceive(uint8_t* buffer, int buflen); // standard timeout is 10 ms
     int analyzePacket();
+    uint16_t vesc_crc16(int start, int len);
 
     float unpack_f16(float scale, int& idx);
     int32_t unpack_i32(int& idx);

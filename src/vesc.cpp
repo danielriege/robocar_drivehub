@@ -1,7 +1,7 @@
 #include "vesc.hpp"
 #include "crc.h"
 
-#define DEBUGGING
+//#define DEBUGGING
 #ifdef DEBUGGING
 #define DBG_PRINT(x...) printf(x)
 #else
@@ -195,6 +195,15 @@ void Vesc::requestState() {
 
 // LOW LEVEL
 
+uint16_t Vesc::vesc_crc16(int start, int len) {
+    unsigned int i;
+	unsigned short cksum = 0;
+	for (i = start; i < len+start; i++) {
+		cksum = crc16_tab[(((cksum >> 8) ^ buffer_[i]) & 0xFF)] ^ (cksum << 8);
+	}
+	return cksum;
+}
+
 int Vesc::analyzePacket() {
     int len = 0;
     while(buffer_.available() >= VESC_PACKET_MINSIZE + len) {
@@ -228,9 +237,10 @@ int Vesc::analyzePacket() {
             break;
         }
         // check crc
-        uint16_t calcCRC = crc16(buffer_.buffer.data()+2, len+2); // from payload until crc (included)
+        uint16_t calcCRC = vesc_crc16(2, len+2); // from payload until crc (included)
         if (calcCRC != 0) {
             DBG_PRINT("VESC: CRC failed! %d \n", calcCRC);
+            hexdump(buffer_.buffer.data(), len);
             buffer_.pop(len+4);
             continue;
         } 
@@ -249,6 +259,7 @@ void Vesc::uartReceive(uint8_t* data, int size) {
     }
     DBG_PRINT("new uart packet \n");
     if (analyzePacket() >= 0) {
+        DBG_PRINT("status packet \n");
         statusReceivedCallback(this->data);
     }
 }
