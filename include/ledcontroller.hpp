@@ -45,10 +45,10 @@ public:
   * Configures GPIOs which are used for LEDs. Should only be created once
   **/
   LEDController() {
-//    if (gpioInitialise() < 0) {
-//      printf("pigpio initialisation failed\n");
-//      exit(1);
-//    }
+    if (gpioInitialise() < 0) {
+      printf("pigpio initialisation failed\n");
+      exit(1);
+    }
 
     lateralTimer = std::make_unique<Timer>();
     setupCompleteTimer = std::make_unique<Timer>();
@@ -63,7 +63,7 @@ public:
   }
 
   ~LEDController() {
-//    gpioTerminate();
+    gpioTerminate();
   }
   ///
   /// BLUE LEDS
