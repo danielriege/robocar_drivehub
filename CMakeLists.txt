@@ -15,7 +15,7 @@ file(GLOB SOURCES src/*.cpp src/*.c)
 add_executable(robocar_drivehub
     ${SOURCES}
     ${HEADER})
-target_link_libraries(robocar_drivehub Boost::thread swiftrobotc)
+target_link_libraries(robocar_drivehub Boost::thread swiftrobotc pigpio)
 target_include_directories(robocar_drivehub PRIVATE include/ )
 
 

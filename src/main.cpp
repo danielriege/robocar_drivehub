@@ -3,6 +3,7 @@
 #include "vesc.hpp"
 #include "receiver_data.hpp"
 #include "timer.hpp"
+#include "ledcontroller.hpp"
 
 #include "swiftrobotc/swiftrobotc.h"
 #include "swiftrobotc/msgs.h"
@@ -15,7 +16,7 @@
 
 using namespace std::chrono_literals;
 
-//#define DEBUGGING
+#define DEBUGGING
 #ifdef DEBUGGING
 #define DBG_PRINT(x...) printf(x)
 #else
@@ -56,6 +57,7 @@ using namespace std::chrono_literals;
 std::unique_ptr<SwiftRobotClient> swiftrobotclient;
 std::unique_ptr<Vesc> vesc;
 std::unique_ptr<Receiver> receiver;
+std::unique_ptr<LEDController> ledcontroller;
 /// timer in which interval the vesc status is published via swiftrobotm
 std::unique_ptr<Timer> vescStatusPublishTimer; 
 std::unique_ptr<Timer> receiverPublishTimer;
@@ -65,7 +67,7 @@ ReceiverData lastReceiverData; // vesc friendly interpretation of raw receiver p
 
 control_msg::Drive lastControlMsg;
 auto lastControlMsgTime = std::chrono::high_resolution_clock::now();
-bool swiftrobotConneted;
+bool swiftrobotConnected;
 
 std::mutex m;
 std::condition_variable cv;
@@ -114,10 +116,10 @@ void receivedSumDPacket(SumD_Packet packet) {
     lastReceiverData.throttle = convertThrottleRange(Receiver::getPercent(packet, THROTTLE_CHANNEL));
     lastReceiverData.steering = convertSteeringRange(Receiver::getPercent(packet, STEERING_CHANNEL));
     lastReceiverData.gearSelector = (Receiver::getPercent(packet, GEAR_CHANNEL) > 0.0) ? drive : reverse;
-    lastReceiverData.autonomous = (Receiver::getPercent(packet, AUTONOMOUS_CHANNEL) > -0.5) ? true : false;
-    lastReceiverData.autonomous_deadman = (Receiver::getPercent(packet, AUTONOMOUS_CHANNEL) > 0.5) ? true : false;
+    lastReceiverData.lanekeep = (Receiver::getPercent(packet, AUTONOMOUS_CHANNEL) > -0.5) ? true : false;
+    lastReceiverData.autonomous = (Receiver::getPercent(packet, AUTONOMOUS_CHANNEL) > 0.5) ? true : false;
 
-    DBG_PRINT("throttle: %f steering: %f gear: %d autonomous: %d, autonomous_deadman: %d \n", lastReceiverData.throttle, lastReceiverData.steering, lastReceiverData.gearSelector, lastReceiverData.autonomous, lastReceiverData.autonomous_deadman);
+    DBG_PRINT("throttle: %f steering: %f gear: %d lanekeep: %d, autonomous: %d \n", lastReceiverData.throttle, lastReceiverData.steering, lastReceiverData.gearSelector, lastReceiverData.lanekeep, lastReceiverData.autonomous);
 
     cv.notify_one();
 }
@@ -125,7 +127,7 @@ void receivedSumDPacket(SumD_Packet packet) {
 // swiftrobotm callbacks 
 void swiftrobotmReceivedInternal(internal_msg::UpdateMsg msg) {
     DBG_PRINT("Device %d is now %d \n", msg.deviceID, msg.status);
-    swiftrobotConneted = (msg.status == internal_msg::status_t::CONNECTED);
+    swiftrobotConnected = (msg.status == internal_msg::status_t::CONNECTED);
 }
 
 void swiftrobotmReceivedDrive(control_msg::Drive msg) {
@@ -146,8 +148,19 @@ void timerTriggeredReceiverPublish() {
     swiftrobotclient->publish(SR_RECEIVER, msg);
 }
 
+void program_interrupted(int signal) {
+    DBG_PRINT("Robohub terminating");
+    failsafe(vesc);
+
+    ledcontroller.reset();
+    receiver.reset();
+    vesc.reset();
+    swiftrobotclient.reset();
+}
+
 int main(int argc, char** argv) {
     // factory
+    ledcontroller = std::make_unique<LEDController>();
     receiver = std::make_unique<Receiver>(SERIAL_RECEIVER, 115200);
     vesc = std::make_unique<Vesc>(SERIAL_VESC, 115200);
     swiftrobotclient = std::make_unique<SwiftRobotClient>(2345); // usb connection
@@ -167,29 +180,39 @@ int main(int argc, char** argv) {
     vescStatusPublishTimer->setInterval(&timerTriggeredVescStatusPublish, INTERVAL_VESCSTATUS_PUBLISH);
     receiverPublishTimer->setInterval(&timerTriggeredReceiverPublish, INTERVAL_RECEIVER_PUBLISH);
 
+    std::signal(SIGINT, program_interrupted);
+
     // MAIN LOOP
     while (1) {
         // wait for receiver
         std::unique_lock<std::mutex> l(m);
         if(cv.wait_for(l, TIMEOUT_RECEIVER) == std::cv_status::timeout) {
             //timeout
-   //         failsafe(vesc);
+//            failsafe(vesc);
             continue;
         }
 
         // FROM HERE ONLY EXECUTED IF REMOTE IS ON
-        if (lastReceiverData.autonomous) {
-            // set commands from iOS device
-            if (timedOut(lastControlMsgTime, TIMEOUT_SWIFTROBOTM) || !swiftrobotConneted) {
-//                failsafe(vesc);
-                continue;
+        if (lastReceiverData.lanekeep) {
+            if (lastReceiverData.autonomous) {
+                // iOS takes full control
+                ledcontroller->turnAutonomousOn();
+                // only when fully autonomous we go in fail safe after timeout.
+                if (timedOut(lastControlMsgTime, TIMEOUT_SWIFTROBOTM) || !swiftrobotConnected) {
+//                    failsafe(vesc);
+                    continue;
+                }
+            } else {
+                // iOS takes control of servo. Does not check for iOS timeout since throttle is in manual control
+                ledcontroller->turnLanekeepOn();
             }
-//            vesc->setServoPos(lastControlMsg.steer);
+            vesc->setServoPos(lastControlMsg.steer);
         } else {
+            ledcontroller->turnAutonomousOrLanekeepOff();
             // remote uses direct control
-//            vesc->setServoPos(lastReceiverData.steering);
+            vesc->setServoPos(lastReceiverData.steering);
             float throttle = (lastReceiverData.gearSelector != reverse) ? lastReceiverData.throttle : -lastReceiverData.throttle;
-//            vesc->setDutyCycle(throttle);
+            vesc->setDutyCycle(throttle);
         }
     }
 }

@@ -16,8 +16,8 @@ struct ReceiverData {
     /// in vesc friendly range
     float steering = 0;
     Gear gearSelector = undefined;
+    bool lanekeep = 0;
     bool autonomous = 0;
-    bool autonomous_deadman = 0;
 };
 
 #endif
