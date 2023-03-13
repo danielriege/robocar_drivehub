@@ -1,3 +1,6 @@
+#ifndef TIMER_HPP
+#define TIMER_HPP
+
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -39,3 +42,5 @@ void Timer::setInterval(std::function<void(void)> function, int interval) {
 void Timer::stop() {
     active = false;
 }
+
+#endif

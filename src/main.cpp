@@ -182,6 +182,8 @@ int main(int argc, char** argv) {
 
     std::signal(SIGINT, program_interrupted);
 
+    ledcontroller->signalSetupComplete();
+
     // MAIN LOOP
     while (1) {
         // wait for receiver
@@ -196,7 +198,7 @@ int main(int argc, char** argv) {
         if (lastReceiverData.lanekeep) {
             if (lastReceiverData.autonomous) {
                 // iOS takes full control
-                ledcontroller->turnAutonomousOn();
+                ledcontroller->turnOnAutonomous();
                 // only when fully autonomous we go in fail safe after timeout.
                 if (timedOut(lastControlMsgTime, TIMEOUT_SWIFTROBOTM) || !swiftrobotConnected) {
 //                    failsafe(vesc);
@@ -204,11 +206,11 @@ int main(int argc, char** argv) {
                 }
             } else {
                 // iOS takes control of servo. Does not check for iOS timeout since throttle is in manual control
-                ledcontroller->turnLanekeepOn();
+                ledcontroller->turnOnLateral();
             }
             vesc->setServoPos(lastControlMsg.steer);
         } else {
-            ledcontroller->turnAutonomousOrLanekeepOff();
+            ledcontroller->turnOffAutonomous();
             // remote uses direct control
             vesc->setServoPos(lastReceiverData.steering);
             float throttle = (lastReceiverData.gearSelector != reverse) ? lastReceiverData.throttle : -lastReceiverData.throttle;
