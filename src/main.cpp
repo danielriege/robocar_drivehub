@@ -199,6 +199,7 @@ int main(int argc, char** argv) {
         if(cv.wait_for(l, TIMEOUT_RECEIVER) == std::cv_status::timeout) {
             //timeout
             context->receiverTimedOut();
+            continue;
         }
         // send triggers initiated by receiver
         if (lastReceiverData.lanekeep) {
