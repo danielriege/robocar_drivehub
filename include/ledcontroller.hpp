@@ -27,16 +27,8 @@
 class LEDController 
 {
 private:
-  enum BlueModes {
-    off, autonomous, setupComplete, lateral
-  };
-
-  enum WhiteModes {
-    off, daylight, fullbeam
-  };
-
-  enum RedModes {
-    off, daylight, breaking
+  enum Modes {
+    off, autonomous, setupComplete, lateral, daylight, fullbeam, breaking
   };
 
 // blue led group
@@ -50,12 +42,12 @@ private:
   std::unique_ptr<Timer> turnSignalTimer;
 
   bool lastBlueState = OFF;
-  BlueModes blueMode = BlueModes::off;
+  Modes blueMode = off;
 
   uint8_t lastHeadlightBrightness = OFF;
-  WhiteModes whiteMode = WhiteModes::off;
+  Modes whiteMode = off;
   uint8_t lastBreakingLightBrightness = OFF;
-  RedModes redMode = RedModes::off;
+  Modes redMode = off;
 public:
   /**
   * Configures GPIOs which are used for LEDs. Should only be created once
@@ -123,8 +115,8 @@ public:
     if (setupCompleteRunning) {
       setupCompleteNext = std::bind(&LEDController::turnOffAutonomous, this);
     } else {
-      if (blueMode != BlueModes::off) {
-        blueMode = BlueModes::off;
+      if (blueMode != off) {
+        blueMode = off;
         lateralTimer->stop();
         gpioWrite(AUTONOMOUS_LED_GPIO, OFF);
         lastBlueState = OFF;
@@ -171,13 +163,13 @@ public:
    * headlights and breaking lights complety off
    */
   void turnOffDaylight() {
-    if (whiteMode != WhiteModes::off) {
-      whiteMode = WhiteModes::off;
+    if (whiteMode != off) {
+      whiteMode = off;
       gpioPWM(HEADLIGHT_LED_GPIO, OFF);
       lastHeadlightBrightness = OFF;
     }
-    if (redMode != RedModes::off) {
-      redMode = RedModes::off;
+    if (redMode != off) {
+      redMode = off;
       gpioPWM(BREAKING_LED_GPIO, OFF);
       lastBreakingLightBrightness = OFF;
     }
