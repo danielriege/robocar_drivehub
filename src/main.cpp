@@ -8,6 +8,11 @@
 #include "swiftrobotc/swiftrobotc.h"
 #include "swiftrobotc/msgs.h"
 
+// FSM
+#include "states/base_state.hpp"
+#include "states/setup.hpp"
+#include "context.hpp"
+
 #include <unistd.h>
 #include <condition_variable>
 #include <chrono>
@@ -54,10 +59,12 @@ using namespace std::chrono_literals;
 #define FAILSAFE_DUTYCYCLE 0.0
 
 // global properties
-std::unique_ptr<SwiftRobotClient> swiftrobotclient;
-std::unique_ptr<Vesc> vesc;
-std::unique_ptr<Receiver> receiver;
-std::unique_ptr<LEDController> ledcontroller;
+std::unique_ptr<Context> context;
+
+std::shared_ptr<SwiftRobotClient> swiftrobotclient;
+std::shared_ptr<Vesc> vesc;
+std::shared_ptr<Receiver> receiver;
+std::shared_ptr<LEDController> ledcontroller;
 /// timer in which interval the vesc status is published via swiftrobotm
 std::unique_ptr<Timer> vescStatusPublishTimer; 
 std::unique_ptr<Timer> receiverPublishTimer;
@@ -86,7 +93,7 @@ bool timedOut(std::chrono::_V2::system_clock::time_point toCheck, std::chrono::m
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - toCheck) > timeout;
 }
 
-void failsafe(std::unique_ptr<Vesc> &vesc) {
+void failsafe(std::shared_ptr<Vesc> &vesc) {
     vesc->setServoPos(FAILSAFE_STEERING);
     vesc->setDutyCycle(FAILSAFE_DUTYCYCLE);
 }
@@ -164,8 +171,12 @@ int main(int argc, char** argv) {
     receiver = std::make_unique<Receiver>(SERIAL_RECEIVER, 115200);
     vesc = std::make_unique<Vesc>(SERIAL_VESC, 115200);
     swiftrobotclient = std::make_unique<SwiftRobotClient>(2345); // usb connection
+
     vescStatusPublishTimer = std::make_unique<Timer>();
     receiverPublishTimer = std::make_unique<Timer>();
+
+    // start FSM
+    context = std::make_unique<Context>(new Setup, swiftrobotclient, vesc, receiver, ledcontroller);
 
     receiver->setPacketReceivedCallback(&receivedSumDPacket);
     receiver->start();
@@ -182,39 +193,57 @@ int main(int argc, char** argv) {
 
     std::signal(SIGINT, program_interrupted);
 
-    ledcontroller->signalSetupComplete();
-
-    // MAIN LOOP
     while (1) {
         // wait for receiver
         std::unique_lock<std::mutex> l(m);
         if(cv.wait_for(l, TIMEOUT_RECEIVER) == std::cv_status::timeout) {
             //timeout
-            failsafe(vesc);
-            continue;
+            context->receiverTimedOut();
         }
-
-        // FROM HERE ONLY EXECUTED IF REMOTE IS ON
+        // send triggers initiated by receiver
         if (lastReceiverData.lanekeep) {
             if (lastReceiverData.autonomous) {
-                // iOS takes full control
-                ledcontroller->turnOnAutonomous();
-                // only when fully autonomous we go in fail safe after timeout.
-                if (timedOut(lastControlMsgTime, TIMEOUT_SWIFTROBOTM) || !swiftrobotConnected) {
-                    failsafe(vesc);
-                    continue;
-                }
+                context->autonomousControl();
             } else {
-                // iOS takes control of servo. Does not check for iOS timeout since throttle is in manual control
-                ledcontroller->turnOnLateral();
+                context->lateralControl();
             }
-//            vesc->setServoPos(lastControlMsg.steer);
         } else {
-            ledcontroller->turnOffAutonomous();
-            // remote uses direct control
-            vesc->setServoPos(lastReceiverData.steering);
-            float throttle = (lastReceiverData.gearSelector != reverse) ? lastReceiverData.throttle : -lastReceiverData.throttle;
-            vesc->setDutyCycle(throttle);
+            context->manualControl();
         }
     }
+    
+
+//     // MAIN LOOP
+//     while (1) {
+//         // wait for receiver
+//         std::unique_lock<std::mutex> l(m);
+//         if(cv.wait_for(l, TIMEOUT_RECEIVER) == std::cv_status::timeout) {
+//             //timeout
+//             failsafe(vesc);
+//             continue;
+//         }
+
+//         // FROM HERE ONLY EXECUTED IF REMOTE IS ON
+//         if (lastReceiverData.lanekeep) {
+//             if (lastReceiverData.autonomous) {
+//                 // iOS takes full control
+//                 ledcontroller->turnOnAutonomous();
+//                 // only when fully autonomous we go in fail safe after timeout.
+//                 if (timedOut(lastControlMsgTime, TIMEOUT_SWIFTROBOTM) || !swiftrobotConnected) {
+//                     failsafe(vesc);
+//                     continue;
+//                 }
+//             } else {
+//                 // iOS takes control of servo. Does not check for iOS timeout since throttle is in manual control
+//                 ledcontroller->turnOnLateral();
+//             }
+// //            vesc->setServoPos(lastControlMsg.steer);
+//         } else {
+//             ledcontroller->turnOffAutonomous();
+//             // remote uses direct control
+//             vesc->setServoPos(lastReceiverData.steering);
+//             float throttle = (lastReceiverData.gearSelector != reverse) ? lastReceiverData.throttle : -lastReceiverData.throttle;
+//             vesc->setDutyCycle(throttle);
+//         }
+//     }
 }

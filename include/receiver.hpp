@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 #include "ringbuffer.hpp"
 #include "serial.hpp"

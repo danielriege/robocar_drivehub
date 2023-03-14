@@ -9,8 +9,8 @@ set(CMAKE_CXX_FLAGS -pthread)
 
 find_package(Boost COMPONENTS thread REQUIRED)
 
-file(GLOB HEADER include/*.hpp include/*.h)
-file(GLOB SOURCES src/*.cpp src/*.c)
+file(GLOB HEADER include/*.hpp include/*.h inluce/states/*.hpp) 
+file(GLOB SOURCES src/*.cpp src/*.c src/states/*.cpp)
 
 add_executable(robocar_drivehub
     ${SOURCES}
