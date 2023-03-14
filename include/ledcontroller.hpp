@@ -27,6 +27,18 @@
 class LEDController 
 {
 private:
+  enum BlueModes {
+    off, autonomous, setupComplete, lateral
+  };
+
+  enum WhiteModes {
+    off, daylight, fullbeam
+  };
+
+  enum RedModes {
+    off, daylight, breaking
+  };
+
 // blue led group
   std::unique_ptr<Timer> lateralTimer;
   std::unique_ptr<Timer> setupCompleteTimer;
@@ -38,8 +50,12 @@ private:
   std::unique_ptr<Timer> turnSignalTimer;
 
   bool lastBlueState = OFF;
+  BlueModes blueMode = BlueModes::off;
+
   uint8_t lastHeadlightBrightness = OFF;
+  WhiteModes whiteMode = WhiteModes::off;
   uint8_t lastBreakingLightBrightness = OFF;
+  RedModes redMode = RedModes::off;
 public:
   /**
   * Configures GPIOs which are used for LEDs. Should only be created once
@@ -76,9 +92,12 @@ public:
     if (setupCompleteRunning) {
       setupCompleteNext = std::bind(&LEDController::turnOnAutonomous, this);
     } else {
-      lateralTimer->stop();
-      gpioWrite(AUTONOMOUS_LED_GPIO, ON);
-      lastBlueState = ON;
+      if (blueMode != autonomous) {
+        blueMode = autonomous;
+        lateralTimer->stop();
+        gpioWrite(AUTONOMOUS_LED_GPIO, ON);
+        lastBlueState = ON;
+      }
     }
   }
 
@@ -90,7 +109,10 @@ public:
     if (setupCompleteRunning) {
       setupCompleteNext = std::bind(&LEDController::turnOnLateral, this);
     } else {
-      lateralTimer->setInterval(std::bind(&LEDController::lateralCycle, this), LATERAL_BLINK_INTERVAL);
+      if (blueMode != lateral) {
+        blueMode = lateral;
+        lateralTimer->setInterval(std::bind(&LEDController::lateralCycle, this), LATERAL_BLINK_INTERVAL);
+      }
     }
   }
 
@@ -101,9 +123,12 @@ public:
     if (setupCompleteRunning) {
       setupCompleteNext = std::bind(&LEDController::turnOffAutonomous, this);
     } else {
-      lateralTimer->stop();
-      gpioWrite(AUTONOMOUS_LED_GPIO, OFF);
-      lastBlueState = OFF;
+      if (blueMode != BlueModes::off) {
+        blueMode = BlueModes::off;
+        lateralTimer->stop();
+        gpioWrite(AUTONOMOUS_LED_GPIO, OFF);
+        lastBlueState = OFF;
+      }
     }
   }
 
@@ -113,10 +138,13 @@ public:
    * Does not update last state since temporary
    */
   void signalSetupComplete() {
-    lateralTimer->stop();
-    setupCompleteRunning = true;
-    setupCompleteNext = nullptr;
-    setupCompleteTimer->setInterval(std::bind(&LEDController::setupCompleteCycle, this), SETUP_COMPLETE_BLINK_INTERVAL);
+    if (blueMode != setupComplete) {
+      blueMode = setupComplete;
+      lateralTimer->stop();
+      setupCompleteRunning = true;
+      setupCompleteNext = nullptr;
+      setupCompleteTimer->setInterval(std::bind(&LEDController::setupCompleteCycle, this), SETUP_COMPLETE_BLINK_INTERVAL);
+    }
   }
 
   ///
@@ -127,20 +155,32 @@ public:
    * headlights and breaking lights in daylight mode
    */
   void turnOnDaylight() {
-    gpioPWM(HEADLIGHT_LED_GPIO, BN_DAYLIGHT);
-    lastHeadlightBrightness = BN_DAYLIGHT;
-    gpioPWM(BREAKING_LED_GPIO, BN_DAYLIGHT);
-    lastBreakingLightBrightness = BN_DAYLIGHT;
+    if (whiteMode != daylight) {
+      whiteMode = daylight;
+      gpioPWM(HEADLIGHT_LED_GPIO, BN_DAYLIGHT);
+      lastHeadlightBrightness = BN_DAYLIGHT;
+    }
+    if (redMode != daylight) {
+      redMode = daylight;
+      gpioPWM(BREAKING_LED_GPIO, BN_DAYLIGHT);
+      lastBreakingLightBrightness = BN_DAYLIGHT;
+    }
   }
 
   /**
    * headlights and breaking lights complety off
    */
   void turnOffDaylight() {
-    gpioPWM(HEADLIGHT_LED_GPIO, OFF);
-    lastHeadlightBrightness = OFF;
-    gpioPWM(BREAKING_LED_GPIO, OFF);
-    lastBreakingLightBrightness = OFF;
+    if (whiteMode != WhiteModes::off) {
+      whiteMode = WhiteModes::off;
+      gpioPWM(HEADLIGHT_LED_GPIO, OFF);
+      lastHeadlightBrightness = OFF;
+    }
+    if (redMode != RedModes::off) {
+      redMode = RedModes::off;
+      gpioPWM(BREAKING_LED_GPIO, OFF);
+      lastBreakingLightBrightness = OFF;
+    }
   }
 
   /**

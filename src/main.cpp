@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
 
     std::signal(SIGINT, program_interrupted);
 
-//    ledcontroller->signalSetupComplete();
+    ledcontroller->signalSetupComplete();
 
     // MAIN LOOP
     while (1) {
