@@ -1,38 +1,44 @@
 #include "states/manual_waiting.hpp"
 #include "states/base_state.hpp"
+#include "context.hpp"
 
-void ManualWaiting::entry() {
-
+void Manual_Waiting::entry() {
+    context_->ledcontroller->turnOffAutonomous();
+    // TODO: setServoPos and motorDutyCycle
 }
 
-void ManualWaiting::exit() {
+void Manual_Waiting::exit() {
     
 }
 
-void ManualWaiting::manualControl() {
+void Manual_Waiting::manualControl() {
     
 }
 
-void ManualWaiting::autonomousControl() {
+void Manual_Waiting::autonomousControl() {
+    if (context_->swiftrobotConnected) {
+        context_->transitionTo(new Autonomous);
+    }
+}
+
+void Manual_Waiting::lateralControl() {
+    if (context_->swiftrobotConnected) {
+        context_->transitionTo(new Lateral_Control);
+    }
+}
+
+void Manual_Waiting::receiverTimedOut() {
+    context_->transitionTo(new Fail_Safe);
+}
+
+void Manual_Waiting::receiverMotorReset() {
+    context_->transitionTo(new Manual_Control);
+}
+
+void Manual_Waiting::swiftrobotTimedOut() {
     
 }
 
-void ManualWaiting::lateralControl() {
-    
-}
-
-void ManualWaiting::receiverTimedOut() {
-    
-}
-
-void ManualWaiting::receiverMotorReset() {
-    
-}
-
-void ManualWaiting::swiftrobotTimedOut() {
-    
-}
-
-void ManualWaiting::receiverConnected() {
+void Manual_Waiting::receiverConnected() {
     
 }

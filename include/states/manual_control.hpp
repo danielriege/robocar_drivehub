@@ -1,9 +1,8 @@
-#ifndef MANUAL_WAITING_HPP
-#define MANUAL_WAITING_HPP
+#pragma once
 
 #include "base_state.hpp"
 
-class Manual_Waiting: public BaseState {
+class Manual_Control: public BaseState {
     void exit() override;
     void entry() override; 
     
@@ -15,5 +14,3 @@ class Manual_Waiting: public BaseState {
     void swiftrobotTimedOut() override;
     void receiverConnected() override;
 };
-
-#endif

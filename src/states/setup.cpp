@@ -16,15 +16,19 @@ void Setup::manualControl() {
 }
 
 void Setup::autonomousControl() {
-    
+    if (context_->swiftrobotConnected) {
+        context_->transitionTo(new Autonomous);
+    }
 }
 
 void Setup::lateralControl() {
-    
+    if (context_->swiftrobotConnected) {
+        context_->transitionTo(new Lateral_Control);
+    }
 }
 
 void Setup::receiverTimedOut() {
-    
+    context_->transitionTo(new Fail_Safe);
 }
 
 void Setup::receiverMotorReset() {

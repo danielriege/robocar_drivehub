@@ -22,6 +22,9 @@ public:
     std::shared_ptr<Vesc> vesc;
     std::shared_ptr<Receiver> receiver;
     std::shared_ptr<LEDController> ledcontroller;
+
+    // flags
+    bool swiftrobotConnected;
 public: 
     Context(BaseState *state, 
             std::shared_ptr<SwiftRobotClient> &swiftrobotclient,
@@ -33,6 +36,7 @@ public:
         this->vesc = vesc;
         this->receiver = receiver;
         this->ledcontroller = ledcontroller;
+        this->swiftrobotConnected = false;
     }
 
     ~Context() {
@@ -47,6 +51,10 @@ public:
         this->state_ = state;
         this->state_->set_context(this);
         this->state_->entry();
+    }
+
+    void transisitionToHistory() {
+        
     }
 
     void manualControl() {
