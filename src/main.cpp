@@ -156,39 +156,3 @@ int main(int argc, char** argv) {
         }
         m_context.unlock();
     }
-    
-
-//     // MAIN LOOP
-//     while (1) {
-//         // wait for receiver
-//         std::unique_lock<std::mutex> l(m);
-//         if(cv.wait_for(l, TIMEOUT_RECEIVER) == std::cv_status::timeout) {
-//             //timeout
-//             failsafe(vesc);
-//             continue;
-//         }
-
-//         // FROM HERE ONLY EXECUTED IF REMOTE IS ON
-//         if (lastReceiverData.lanekeep) {
-//             if (lastReceiverData.autonomous) {
-//                 // iOS takes full control
-//                 ledcontroller->turnOnAutonomous();
-//                 // only when fully autonomous we go in fail safe after timeout.
-//                 if (timedOut(lastControlMsgTime, TIMEOUT_SWIFTROBOTM) || !swiftrobotConnected) {
-//                     failsafe(vesc);
-//                     continue;
-//                 }
-//             } else {
-//                 // iOS takes control of servo. Does not check for iOS timeout since throttle is in manual control
-//                 ledcontroller->turnOnLateral();
-//             }
-// //            vesc->setServoPos(lastControlMsg.steer);
-//         } else {
-//             ledcontroller->turnOffAutonomous();
-//             // remote uses direct control
-//             vesc->setServoPos(lastReceiverData.steering);
-//             float throttle = (lastReceiverData.gearSelector != reverse) ? lastReceiverData.throttle : -lastReceiverData.throttle;
-//             vesc->setDutyCycle(throttle);
-//         }
-//     }
-}
