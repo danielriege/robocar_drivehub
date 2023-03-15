@@ -56,7 +56,7 @@ public:
     }
 
     void transisitionToHistory() {
-        if (this->state_ != nullptr) {
+        if (this->history_ != nullptr) {
             this->state_->exit();
             this->state_ = std::move(this->history_);
             this->state_->set_context(this);
