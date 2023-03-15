@@ -4,7 +4,6 @@
 #include "states/base_state.hpp"
 #include "receiver.hpp"
 #include "vesc.hpp"
-#include "receiver_data.hpp"
 #include "timer.hpp"
 #include "ledcontroller.hpp"
 

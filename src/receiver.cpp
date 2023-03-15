@@ -20,13 +20,25 @@ void Receiver::uartReceive(uint8_t* data, size_t size) {
         buffer_.push(data[i]);
     }
     if (analyzePacket() > 0) {
-        packetReceivedCallback(this->packet);
+        ReceiverPacket tmp_packet;
+        SumD_to_ReceiverPacket(this->packet, &tmp_packet);
+        packetReceivedCallback(tmp_packet);
     }
 }
 
 // sets callback so program can be notified on new packet
-void Receiver::setPacketReceivedCallback(std::function<void(SumD_Packet data)> callback) {
+void Receiver::setPacketReceivedCallback(std::function<void(ReceiverPacket data)> callback) {
     packetReceivedCallback = callback;
+}
+
+void Receiver::SumD_to_ReceiverPacket(SumD_Packet sumd, ReceiverPacket *packet) {
+    packet->throttle = convertThrottleRange(getPercent(sumd, THROTTLE_CHANNEL));
+    packet->steering = convertSteeringRange(getPercent(sumd, STEERING_CHANNEL));
+    packet->gearSelector = (getPercent(sumd, GEAR_CHANNEL) > 0.0) ? drive : reverse;
+    packet->lateral_control = (getPercent(sumd, AUTONOMOUS_CHANNEL) > -0.5) ? true : false;
+    packet->autonomous = (getPercent(sumd, AUTONOMOUS_CHANNEL) > 0.5) ? true : false;
+    
+    DBG_PRINT("throttle: %f steering: %f gear: %d lanekeep: %d, autonomous: %d \n", lastReceiverData.throttle, lastReceiverData.steering, lastReceiverData.gearSelector, lastReceiverData.lanekeep, lastReceiverData.autonomous);
 }
 
 uint16_t Receiver::sumd_crc16(int len) {
