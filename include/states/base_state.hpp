@@ -5,13 +5,13 @@ class Context;
 
 class BaseState {
 protected:
-    Context *context_;
+    std::weak_ptr<Context> context_;
 public:
     virtual ~BaseState() {
 
     }
 
-    void set_context(Context *context) {
+    void set_context(std::unique_ptr<Context> &context) {
         this->context_ = context;
     }
 

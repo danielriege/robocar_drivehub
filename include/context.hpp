@@ -15,7 +15,8 @@
 
 class Context {
 private:
-    BaseState *state_;
+    std::unique_ptr<BaseState> state_;
+    std::unique_ptr<BaseState> history_;
 public:
     // application properties
     std::shared_ptr<SwiftRobotClient> swiftrobotclient;
@@ -26,35 +27,41 @@ public:
     // flags
     bool swiftrobotConnected;
 public: 
-    Context(BaseState *state, 
+    Context(std::unique_ptr<BaseState> state, 
             std::shared_ptr<SwiftRobotClient> &swiftrobotclient,
             std::shared_ptr<Vesc> &vesc,
             std::shared_ptr<Receiver> &receiver,
-            std::shared_ptr<LEDController> &ledcontroller): state_(nullptr) {
-        this->transitionTo(state);
+            std::shared_ptr<LEDController> &ledcontroller): state_(nullptr), history_(nullptr) {
         this->swiftrobotclient = swiftrobotclient;
         this->vesc = vesc;
         this->receiver = receiver;
         this->ledcontroller = ledcontroller;
         this->swiftrobotConnected = false;
+
+        this->transitionTo(state);
     }
 
     ~Context() {
-        delete state_;
+        
     }
 
     void transitionTo(BaseState *state) {
         if (this->state_ != nullptr) {
             this->state_->exit();
-            delete this->state_;
         }
-        this->state_ = state;
+        this->history_ = std::move(this->state_);
+        this->state_.reset(state);
         this->state_->set_context(this);
         this->state_->entry();
     }
 
     void transisitionToHistory() {
-        
+        if (this->state_ != nullptr) {
+            this->state_->exit();
+            this->state_ = std::move(this->history_);
+            this->state_->set_context(this);
+            this->state_->entry();
+        }
     }
 
     void manualControl() {
