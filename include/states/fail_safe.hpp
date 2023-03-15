@@ -5,6 +5,9 @@
 class Fail_Safe: public BaseState {
     void exit() override;
     void entry() override; 
+
+    void ReceiverPacketUpdated(ReceiverPacket packet) override;
+    void DriveMsgUpdated(control_msg::Drive msg) override; 
     
     void manualControl() override;
     void autonomousControl() override;

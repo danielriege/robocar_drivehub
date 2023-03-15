@@ -8,16 +8,13 @@
 
 void Manual_Waiting::entry() {
     context_->ledcontroller->turnOffAutonomous();
-    // TODO: setServoPos and motorDutyCycle
+    context_->vesc->setServoPos(FAILSAFE_STEERING);
+    context_->vesc->setDutyCycle(FAILSAFE_DUTYCYCLE);
 }
 
-void Manual_Waiting::exit() {
-    
-}
+void Manual_Waiting::exit() {}
 
-void Manual_Waiting::manualControl() {
-    
-}
+void Manual_Waiting::manualControl() {}
 
 void Manual_Waiting::autonomousControl() {
     if (context_->swiftrobotConnected) {
@@ -39,10 +36,10 @@ void Manual_Waiting::receiverMotorReset() {
     context_->transitionTo(new Manual_Control);
 }
 
-void Manual_Waiting::swiftrobotTimedOut() {
-    
-}
+void Manual_Waiting::swiftrobotTimedOut() {}
 
-void Manual_Waiting::receiverConnected() {
-    
-}
+void Manual_Waiting::receiverConnected() {}
+
+void Manual_Waiting::ReceiverPacketUpdated(ReceiverPacket packet) {}
+
+void Manual_Waiting::DriveMsgUpdated(control_msg::Drive msg) {}

@@ -63,6 +63,19 @@ public:
         }
     }
 
+    // update events
+    // These are used to pass certain information that was externally updated to the states
+
+    void updateReceiverPacket(ReceiverPacket packet) {
+        
+    }
+
+    void updateDriveMsg(control_msg::Drive msg) {
+
+    }
+
+    // signals
+
     void manualControl() {
         this->state_->manualControl();
     }

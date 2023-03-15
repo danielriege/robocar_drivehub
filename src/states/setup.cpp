@@ -6,9 +6,7 @@
 #include "states/fail_safe.hpp"
 #include "context.hpp"
 
-void Setup::entry() {
-
-}
+void Setup::entry() {}
 
 void Setup::exit() {
     context_->ledcontroller->signalSetupComplete();
@@ -34,14 +32,13 @@ void Setup::receiverTimedOut() {
     context_->transitionTo(new Fail_Safe);
 }
 
-void Setup::receiverMotorReset() {
-    
-}
+void Setup::receiverMotorReset() {}
 
-void Setup::swiftrobotTimedOut() {
-    
-}
+void Setup::swiftrobotTimedOut() {}
 
-void Setup::receiverConnected() {
-    
-}
+void Setup::receiverConnected() {}
+
+
+void Setup::ReceiverPacketUpdated(ReceiverPacket packet) {}
+
+void Setup::DriveMsgUpdated(control_msg::Drive msg) {}
