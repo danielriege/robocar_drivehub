@@ -1,5 +1,8 @@
 #include "states/autonomous.hpp"
 #include "states/base_state.hpp"
+#include "states/manual_waiting.hpp"
+#include "states/lateral_control.hpp"
+#include "states/fail_safe.hpp"
 #include "context.hpp"
 
 void Autonomous::entry() {

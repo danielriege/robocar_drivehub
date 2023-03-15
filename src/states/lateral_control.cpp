@@ -1,5 +1,8 @@
 #include "states/lateral_control.hpp"
 #include "states/base_state.hpp"
+#include "states/manual_waiting.hpp"
+#include "states/fail_safe.hpp"
+#include "states/autonomous.hpp"
 #include "context.hpp"
 
 void Lateral_Control::entry() {

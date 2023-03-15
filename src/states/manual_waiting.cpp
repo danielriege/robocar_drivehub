@@ -1,5 +1,9 @@
 #include "states/manual_waiting.hpp"
 #include "states/base_state.hpp"
+#include "states/autonomous.hpp"
+#include "states/lateral_control.hpp"
+#include "states/fail_safe.hpp"
+#include "states/manual_control.hpp"
 #include "context.hpp"
 
 void Manual_Waiting::entry() {

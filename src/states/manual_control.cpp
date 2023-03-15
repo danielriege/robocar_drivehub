@@ -1,5 +1,8 @@
 #include "states/manual_control.hpp"
 #include "states/base_state.hpp"
+#include "states/autonomous.hpp"
+#include "states/lateral_control.hpp"
+#include "states/fail_safe.hpp"
 #include "context.hpp"
 
 void Manual_Control::entry() {

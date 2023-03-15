@@ -35,5 +35,5 @@ void Fail_Safe::swiftrobotTimedOut() {
 }
 
 void Fail_Safe::receiverConnected() {
-    context_->tranisitionToHistory();
+    context_->transitionToHistory();
 }

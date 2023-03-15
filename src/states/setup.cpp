@@ -1,6 +1,9 @@
 #include "states/base_state.hpp"
 #include "states/setup.hpp"
 #include "states/manual_waiting.hpp"
+#include "states/autonomous.hpp"
+#include "states/lateral_control.hpp"
+#include "states/fail_safe.hpp"
 #include "context.hpp"
 
 void Setup::entry() {
@@ -12,7 +15,7 @@ void Setup::exit() {
 }
 
 void Setup::manualControl() {
-    context_->transitionTo(new ManualWaiting);
+    context_->transitionTo(new Manual_Waiting);
 }
 
 void Setup::autonomousControl() {

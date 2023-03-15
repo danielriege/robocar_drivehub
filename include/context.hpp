@@ -27,7 +27,7 @@ public:
     // flags
     bool swiftrobotConnected;
 public: 
-    Context(std::unique_ptr<BaseState> state, 
+    Context(BaseState* state, 
             std::shared_ptr<SwiftRobotClient> &swiftrobotclient,
             std::shared_ptr<Vesc> &vesc,
             std::shared_ptr<Receiver> &receiver,
@@ -55,7 +55,7 @@ public:
         this->state_->entry();
     }
 
-    void transisitionToHistory() {
+    void transitionToHistory() {
         if (this->history_ != nullptr) {
             this->state_->exit();
             this->state_ = std::move(this->history_);
