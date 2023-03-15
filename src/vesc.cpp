@@ -134,16 +134,20 @@ void Vesc::start() {
 }
 
 void Vesc::setDutyCycle(float duty) {
-    uint8_t paket[5];
+    if (duty >= 0.0 && duty <= 1.0) {
+        // convert into car specific bounds
+        duty = duty * THROTTLE_MAX_DUTY_CYCLE;
+        uint8_t paket[5];
 
-    int32_t iduty = (int32_t)(duty * 100000);
-    paket[0] = COMM_SET_DUTY;
-    paket[1] = iduty >> 24;
-    paket[2] = iduty >> 16;
-    paket[3] = iduty >> 8;
-    paket[4] = iduty;
+        int32_t iduty = (int32_t)(duty * 100000);
+        paket[0] = COMM_SET_DUTY;
+        paket[1] = iduty >> 24;
+        paket[2] = iduty >> 16;
+        paket[3] = iduty >> 8;
+        paket[4] = iduty;
 
-    sendPaket(paket, 5);
+        sendPaket(paket, 5);
+    }
 }
 
 void Vesc::setCurrent(float current) {
@@ -173,15 +177,19 @@ void Vesc::setCurrentBrake(float current) {
 }
 
 void Vesc::setServoPos(float pos) {
-    // invalid dev address
-    uint8_t paket[3];
+    if (pos >= 0.0 && pos <= 1.0) {
+        // convert into car specific bounds
+        pos = (pos * 2 - 1) * -STEERING_MAX_DELTA + 0.5 + STEERING_OFFSET;
 
-    int16_t ipos = (int16_t)(pos * 1000);
-    paket[0] = COMM_SET_SERVO_POS;
-    paket[1] = ipos >> 8;
-    paket[2] = ipos;
+        uint8_t paket[3];
 
-    sendPaket(paket, 3);
+        int16_t ipos = (int16_t)(pos * 1000);
+        paket[0] = COMM_SET_SERVO_POS;
+        paket[1] = ipos >> 8;
+        paket[2] = ipos;
+
+        sendPaket(paket, 3);
+    }
 }
 
 void Vesc::requestState() {

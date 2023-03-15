@@ -3,6 +3,7 @@
 
 #include "serial.hpp"
 #include "ringbuffer.hpp"
+#include "config.h"
 
 #include <chrono>
 
@@ -24,9 +25,11 @@ public:
     void start();
     void setStatusReceivedCallback(std::function<void(VescData data)> callback);
 
+    /// assert in range [0.0 , 1.0]
     void setDutyCycle(float duty);
     void setCurrent(float current);
     void setCurrentBrake(float current);
+    /// assert in range [0.0 , 1.0]
     void setServoPos(float pos);
     void requestState();
 

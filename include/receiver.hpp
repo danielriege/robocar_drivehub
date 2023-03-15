@@ -30,9 +30,9 @@ enum ReceiverGear {
 };
 
 struct ReceiverPacket {
-    /// converted into car specific range [0.0, THROTTLE_MAX_DUTY_CYCLE]
+    /// in range [0.0 , 1.0]
     float throttle = 0;
-    /// converted into car specific range [0.0, 1.0]. center depends on offset
+    /// in range [0.0 , 1.0]
     float steering = 0;
     ReceiverGear gearSelector = undefined;
     bool lateral_control = 0;
@@ -49,9 +49,8 @@ private:
     static inline uint16_t getRaw(SumD_Packet packet, int chan) { return packet.channel[chan]; }
     static inline uint16_t getPPM(SumD_Packet packet, int chan) { return packet.channel[chan] >> 3; }
 
-    static inline float convertSteeringRange(float receiverValue) { return receiverValue * -STEERING_MAX_DELTA + 0.5 + STEERING_OFFSET; }
-
-    static inline float convertThrottleRange(float receiverValue) { return (receiverValue * 0.5 + 0.5) * THROTTLE_MAX_DUTY_CYCLE; }
+    static inline float convertSteeringRange(float receiverValue) { return receiverValue * 0.5 + 0.5; }
+    static inline float convertThrottleRange(float receiverValue) { return receiverValue * 0.5 + 0.5; }
 
 
     void uartReceive(uint8_t* data, size_t size);
