@@ -9,6 +9,7 @@
 
 class Timer {
 	std::atomic<bool> active{true};
+    std::thread t;
 	
     public:
         void setTimeout(std::function<void(void)> function, int delay);

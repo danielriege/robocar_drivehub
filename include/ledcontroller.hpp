@@ -18,7 +18,7 @@
 
 #define LATERAL_BLINK_INTERVAL 1000 // ms
 #define SETUP_COMPLETE_BLINK_INTERVAL 300 // ms
-#define TURNSIGNAL_BLINK_INTERVAL 800 // ms
+#define TURNSIGNAL_BLINK_INTERVAL 500 // ms
 
 /**
  * abstracts control of the LEDs into higher level methods.
@@ -30,7 +30,7 @@ class LEDController
 {
 private:
   enum Modes {
-    off, autonomous, setupComplete, lateral, daylight, fullbeam, breaking
+    off, autonomous, setupComplete, lateral, daylight, fullbeam, breaking, left_blink, right_blink, hazard
   };
 
 // blue led group
@@ -42,6 +42,8 @@ private:
 // yellow led group
   /// timer for both signals
   std::unique_ptr<Timer> turnSignalTimer;
+  Modes yellowMode = off;
+  bool lastYellowState = OFF;
 
   bool lastBlueState = OFF;
   Modes blueMode = off;
@@ -211,7 +213,60 @@ public:
   /// YELLOW LEDS
   ///
 
+  void turnOnHazardLights() {
+    if (yellowMode == off) {
+      turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
+    }
+    yellowMode = hazard;
+  }
+
+  void turnOffHazardLights() {
+    turnSignalTimer->stop();
+    yellowMode = off;
+  }
+
+  void turnOnTurnSignalLeft() {
+    if (yellowMode == off) {
+      turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
+    }
+    yellowMode = left_blink;
+  }
+
+  void turnOnTurnSignalRight() {
+    if (yellowMode == off) {
+      turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
+    }
+    yellowMode = right_blink;
+  }
+
+  void turnOffTurnSignal() {
+    turnSignalTimer->stop();
+    yellowMode = off;
+  }
+
 private:
+
+  void turnSignalCycle() {
+    if (yellowMode == hazard || yellowMode == left_blink) {
+      if (lastYellowState == ON) {
+        gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
+        lastYellowState = OFF;
+      } else {
+        gpioWrite(SIGNAL_LEFT_LED_GPIO, ON);
+        lastYellowState = ON;
+      }
+    }
+
+    if (yellowMode == hazard || yellowMode == right_blink) {
+      if (lastYellowState == ON) {
+        gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
+        lastYellowState = OFF;
+      } else {
+        gpioWrite(SIGNAL_LEFT_LED_GPIO, ON);
+        lastYellowState = ON;
+      }
+    }
+  }
 
   void lateralCycle() {
     if(lastBlueState == ON) {

@@ -71,6 +71,7 @@ void receivedVescStatus(VescData data) {
 void receivedReceiverPacket(ReceiverPacket packet) {
     lastReceiverPing = std::chrono::high_resolution_clock::now();
     m_context.lock();
+    context->updateReceiverPacket(packet);
     context->receiverConnected();
     // send triggers initiated by receiver
     if (packet.lateral_control) {
@@ -111,7 +112,9 @@ void swiftrobotmReceivedInternal(internal_msg::UpdateMsg msg) {
 
 void swiftrobotmReceivedDrive(control_msg::Drive msg) {
     lastSwiftrobotPing = std::chrono::high_resolution_clock::now();
-    // TODO
+     m_context.lock();
+    context->updateDriveMsg(msg);
+     m_context.unlock();
 }
 
 // timer callbacks
@@ -156,3 +159,4 @@ int main(int argc, char** argv) {
         }
         m_context.unlock();
     }
+}

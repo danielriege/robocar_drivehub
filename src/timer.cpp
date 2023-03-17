@@ -1,28 +1,33 @@
 #include "timer.hpp"
 
 void Timer::setTimeout(std::function<void(void)> function, int delay) {
+    stop();
+
     active = true;
-    std::thread t([=]() {
+    t = std::thread([=]() {
         if(!active.load()) return;
         std::this_thread::sleep_for(std::chrono::milliseconds(delay));
         if(!active.load()) return;
         function();
     });
-    t.detach();
 }
 
 void Timer::setInterval(std::function<void(void)> function, int interval) {
+    stop();
+
     active = true;
-    std::thread t([=]() {
+    t = std::thread([=]() {
         while(active.load()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(interval));
             if(!active.load()) return;
             function();
         }
     });
-    t.detach();
 }
 
 void Timer::stop() {
-    active = false;
+    if (active) {
+        active = false;
+        t.join();
+    }
 }
