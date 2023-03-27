@@ -147,15 +147,17 @@ int main(int argc, char** argv) {
 
     vescStatusPublishTimer->setInterval(&timerTriggeredVescStatusPublish, INTERVAL_VESCSTATUS_PUBLISH);
 
+    context->swiftrobotConnected = true;
+
     // watchdog
     while (1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL_TIMEOUT_CHECK));
         m_context.lock();
         if (timedOut(lastReceiverPing, TIMEOUT_HARDWARE)) {
-            context->swiftrobotTimedOut();
+            context->receiverTimedOut();
         }
         if (timedOut(lastSwiftrobotPing, TIMEOUT_HARDWARE)) {
-            context->receiverTimedOut();
+//            context->swiftrobotTimedOut();
         }
         m_context.unlock();
     }

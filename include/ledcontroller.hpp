@@ -5,7 +5,7 @@
 
 #define AUTONOMOUS_LED_GPIO 21
 #define HEADLIGHT_LED_GPIO 13 // PWM
-#define BREAKING_LED_GPIO 10 // PWM
+#define BREAKING_LED_GPIO 18 // PWM
 #define SIGNAL_LEFT_LED_GPIO 16
 #define SIGNAL_RIGHT_LED_GPIO 20 
 
@@ -247,7 +247,17 @@ public:
 private:
 
   void turnSignalCycle() {
-    if (yellowMode == hazard || yellowMode == left_blink) {
+    if (yellowMode == hazard) {
+      if (lastYellowState == ON) {
+        gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
+        gpioWrite(SIGNAL_RIGHT_LED_GPIO, OFF);
+        lastYellowState = OFF;
+      } else {
+        gpioWrite(SIGNAL_LEFT_LED_GPIO, ON);
+        gpioWrite(SIGNAL_RIGHT_LED_GPIO, ON);
+        lastYellowState = ON;
+       }
+    } else if (yellowMode == left_blink) {
       if (lastYellowState == ON) {
         gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
         lastYellowState = OFF;
@@ -255,14 +265,12 @@ private:
         gpioWrite(SIGNAL_LEFT_LED_GPIO, ON);
         lastYellowState = ON;
       }
-    }
-
-    if (yellowMode == hazard || yellowMode == right_blink) {
+    } else if (yellowMode == right_blink) {
       if (lastYellowState == ON) {
-        gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
+        gpioWrite(SIGNAL_RIGHT_LED_GPIO, OFF);
         lastYellowState = OFF;
       } else {
-        gpioWrite(SIGNAL_LEFT_LED_GPIO, ON);
+        gpioWrite(SIGNAL_RIGHT_LED_GPIO, ON);
         lastYellowState = ON;
       }
     }

@@ -28,6 +28,8 @@ void Timer::setInterval(std::function<void(void)> function, int interval) {
 void Timer::stop() {
     if (active) {
         active = false;
-        t.join();
+        if (t.joinable() && std::this_thread::get_id() != t.get_id()) {
+          t.join();
+        }
     }
 }

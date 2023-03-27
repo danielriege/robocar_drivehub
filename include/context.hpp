@@ -38,6 +38,7 @@ public:
         this->swiftrobotConnected = false;
 
         this->transitionTo(state);
+        this->history_.reset(state);
     }
 
     ~Context() {

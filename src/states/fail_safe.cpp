@@ -3,13 +3,13 @@
 #include "context.hpp"
 
 void Fail_Safe::entry() {
-   //context_->ledcontroller->turnOnHazard();
+   context_->ledcontroller->turnOnHazardLights();
    context_->vesc->setServoPos(FAILSAFE_STEERING);
    context_->vesc->setDutyCycle(FAILSAFE_DUTYCYCLE);
 }
 
 void Fail_Safe::exit() {
-    //context_->ledcontroller->turnOffHazard();
+    context_->ledcontroller->turnOffHazardLights();
 }
 
 void Fail_Safe::manualControl() {}
