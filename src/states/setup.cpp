@@ -10,6 +10,7 @@ void Setup::entry() {}
 
 void Setup::exit() {
     context_->ledcontroller->signalSetupComplete();
+    printf("exit setup\n");
 }
 
 void Setup::manualControl() {

@@ -10,9 +10,12 @@ void Manual_Waiting::entry() {
     context_->ledcontroller->turnOffAutonomous();
     context_->vesc->setServoPos(FAILSAFE_STEERING);
     context_->vesc->setDutyCycle(FAILSAFE_DUTYCYCLE);
+    printf("entry manual waiting\n");
 }
 
-void Manual_Waiting::exit() {}
+void Manual_Waiting::exit() {
+    printf("exit manual waiting\n");
+}
 
 void Manual_Waiting::manualControl() {}
 

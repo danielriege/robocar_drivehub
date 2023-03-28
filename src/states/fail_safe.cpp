@@ -6,10 +6,12 @@ void Fail_Safe::entry() {
    context_->ledcontroller->turnOnHazardLights();
    context_->vesc->setServoPos(FAILSAFE_STEERING);
    context_->vesc->setDutyCycle(FAILSAFE_DUTYCYCLE);
+   printf("entry failsafe\n");
 }
 
 void Fail_Safe::exit() {
     context_->ledcontroller->turnOffHazardLights();
+    printf("exit failsafe\n");
 }
 
 void Fail_Safe::manualControl() {}
