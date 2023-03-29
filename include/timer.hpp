@@ -6,10 +6,15 @@
 #include <chrono>
 #include <atomic>
 #include <functional>
+#include <mutex>
+#include <condition_variable>
 
 class Timer {
-	std::atomic<bool> active{true};
-    std::thread t;
+    private:
+        std::atomic<bool> active{true};
+        std::thread t;
+        std::mutex m;
+        std::condition_variable cv;
 	
     public:
         void setTimeout(std::function<void(void)> function, int delay);

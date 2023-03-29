@@ -21,6 +21,13 @@
 #define SETUP_COMPLETE_BLINK_INTERVAL 300 // ms
 #define TURNSIGNAL_BLINK_INTERVAL 500 // ms
 
+//#define DEBUGGING
+#ifdef DEBUGGING
+#define DBG_PRINT(x...) printf(x)
+#else
+#define DBG_PRINT(x...) //
+#endif
+
 /**
  * abstracts control of the LEDs into higher level methods.
  * Methods which start with 'signal' play a pre defined sequence. Can be overwritten with a 'turnOff' method of the same LED
@@ -30,6 +37,7 @@
 class LEDController 
 {
 private:
+  /// all possible modes for the led controller. Every color group uses only a subset
   enum Modes {
     off, autonomous, setupComplete, lateral, daylight, fullbeam, breaking, left_blink, right_blink, hazard
   };
@@ -49,8 +57,11 @@ private:
   bool lastBlueState = OFF;
   Modes blueMode = off;
 
+  /// for both left and right
   uint8_t lastHeadlightBrightness = OFF;
-  Modes whiteMode = off;
+  Modes whiteLeftMode = off;
+  Modes whiteRightMode = off;
+  std::function<void(void)> blinkingWhiteNext = nullptr;
   uint8_t lastBreakingLightBrightness = OFF;
   Modes redMode = off;
 public:
@@ -69,7 +80,8 @@ public:
 
     // configure GPIO as output
     gpioSetMode(AUTONOMOUS_LED_GPIO, PI_OUTPUT);
-    gpioSetMode(HEADLIGHT_LED_GPIO, PI_OUTPUT);
+    gpioSetMode(HEADLIGHT_LEFT_LED_GPIO, PI_OUTPUT);
+    gpioSetMode(HEADLIGHT_RIGHT_LED_GPIO, PI_OUTPUT);
     gpioSetMode(BREAKING_LED_GPIO, PI_OUTPUT);
     gpioSetMode(SIGNAL_LEFT_LED_GPIO, PI_OUTPUT);
     gpioSetMode(SIGNAL_RIGHT_LED_GPIO, PI_OUTPUT);
@@ -107,6 +119,7 @@ public:
       setupCompleteNext = std::bind(&LEDController::turnOnLateral, this);
     } else {
       if (blueMode != lateral) {
+        lateralCycle(); // first start manual so there is a change right away
         blueMode = lateral;
         lateralTimer->setInterval(std::bind(&LEDController::lateralCycle, this), LATERAL_BLINK_INTERVAL);
       }
@@ -150,13 +163,28 @@ public:
 
   /**
    * headlights and breaking lights in daylight mode
+   * This method can be called again if one blinking light is active
    */
   void turnOnDaylight() {
-    if (whiteMode != daylight) {
-      whiteMode = daylight;
-      gpioPWM(HEADLIGHT_LED_GPIO, BN_DAYLIGHT);
-      lastHeadlightBrightness = BN_DAYLIGHT;
+    if (yellowMode == hazard || yellowMode == left_blink) {
+      blinkingWhiteNext = std::bind(&LEDController::turnOnDaylight, this);
+    } else {
+      if (whiteLeftMode != daylight) {
+        whiteLeftMode = daylight;
+        gpioPWM(HEADLIGHT_LEFT_LED_GPIO, BN_DAYLIGHT);
+      }
     }
+
+    if (yellowMode == hazard || yellowMode == right_blink) {
+      blinkingWhiteNext = std::bind(&LEDController::turnOnDaylight, this);
+    } else {
+      if (whiteRightMode != daylight) {
+        whiteRightMode = daylight;
+        gpioPWM(HEADLIGHT_RIGHT_LED_GPIO, BN_DAYLIGHT);
+      }
+    }
+    lastHeadlightBrightness = BN_DAYLIGHT;
+
     if (redMode != daylight) {
       redMode = daylight;
       gpioPWM(BREAKING_LED_GPIO, BN_DAYLIGHT);
@@ -168,9 +196,12 @@ public:
    * headlights and breaking lights complety off
    */
   void turnOffDaylight() {
-    if (whiteMode != off) {
-      whiteMode = off;
-      gpioPWM(HEADLIGHT_LED_GPIO, OFF);
+    blinkingWhiteNext = nullptr;
+    if (whiteLeftMode != off || whiteRightMode != off) {
+      whiteLeftMode = off;
+      whiteRightMode = off;
+      gpioPWM(HEADLIGHT_RIGHT_LED_GPIO, OFF);
+      gpioPWM(HEADLIGHT_LEFT_LED_GPIO, OFF);
       lastHeadlightBrightness = OFF;
     }
     if (redMode != off) {
@@ -185,14 +216,31 @@ public:
    * Does not update last state since this is temporary
    */
   void turnOnFullBeam() {
-    gpioPWM(HEADLIGHT_LED_GPIO, BN_FULL);
+    if (yellowMode == hazard || yellowMode == left_blink) {
+      blinkingWhiteNext = std::bind(&LEDController::turnOnFullBeam, this);
+    } else {
+      gpioPWM(HEADLIGHT_LEFT_LED_GPIO, BN_FULL);
+    }
+
+    if (yellowMode == hazard || yellowMode == right_blink) {
+      blinkingWhiteNext = std::bind(&LEDController::turnOnFullBeam, this);
+    } else {
+      gpioPWM(HEADLIGHT_RIGHT_LED_GPIO, BN_FULL);
+    }
+    lastHeadlightBrightness = BN_FULL;
   }
 
     /**
    * headlights back into last state
    */
   void turnOffFullBeam() {
-    gpioPWM(HEADLIGHT_LED_GPIO, lastHeadlightBrightness);
+    if (lastHeadlightBrightness == OFF) {
+      blinkingWhiteNext = nullptr;
+      gpioPWM(HEADLIGHT_LEFT_LED_GPIO, OFF);
+      gpioPWM(HEADLIGHT_RIGHT_LED_GPIO, OFF);
+    } else if (lastHeadlightBrightness == BN_DAYLIGHT) {
+      blinkingWhiteNext = std::bind(&LEDController::turnOnDaylight, this);
+    }
   }
 
   /**
@@ -215,33 +263,40 @@ public:
   ///
 
   void turnOnHazardLights() {
+    yellowMode = hazard;
     if (yellowMode == off) {
+      turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
-    yellowMode = hazard;
   }
 
   void turnOffHazardLights() {
     turnSignalTimer->stop();
+    gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
+    gpioWrite(SIGNAL_RIGHT_LED_GPIO, OFF);
     yellowMode = off;
   }
 
   void turnOnTurnSignalLeft() {
+    yellowMode = left_blink;
     if (yellowMode == off) {
+      turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
-    yellowMode = left_blink;
   }
 
   void turnOnTurnSignalRight() {
+    yellowMode = right_blink;
     if (yellowMode == off) {
+      turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
-    yellowMode = right_blink;
   }
 
   void turnOffTurnSignal() {
     turnSignalTimer->stop();
+    gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
+    gpioWrite(SIGNAL_RIGHT_LED_GPIO, OFF);
     yellowMode = off;
   }
 

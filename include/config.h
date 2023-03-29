@@ -22,7 +22,7 @@ using namespace std::chrono_literals;
 #define SR_STATUS (uint16_t) 0x11
 #define SR_RECEIVER (uint16_t) 0x13
 
-#define TIMEOUT_HARDWARE 30ms
+#define TIMEOUT_HARDWARE 50ms
 
 #define INTERVAL_TIMEOUT_CHECK 50 // ms
 #define INTERVAL_VESCSTATUS_PUBLISH 100 // ms
