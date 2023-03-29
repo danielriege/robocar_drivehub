@@ -263,11 +263,12 @@ public:
   ///
 
   void turnOnHazardLights() {
-    yellowMode = hazard;
     if (yellowMode == off) {
+      yellowMode = hazard;
       turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
+    yellowMode = hazard;
   }
 
   void turnOffHazardLights() {
@@ -278,19 +279,21 @@ public:
   }
 
   void turnOnTurnSignalLeft() {
-    yellowMode = left_blink;
     if (yellowMode == off) {
+      yellowMode = left_blink;
       turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
+    yellowMode = left_blink;
   }
 
   void turnOnTurnSignalRight() {
-    yellowMode = right_blink;
     if (yellowMode == off) {
+      yellowMode = right_blink;
       turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
+    yellowMode = right_blink;
   }
 
   void turnOffTurnSignal() {
