@@ -3,7 +3,7 @@
 #include "pigpio.h"
 #include "timer.hpp"
 
-#define AUTONOMOUS_LED_GPIO 4
+#define AUTONOMOUS_LED_GPIO 27
 #define HEADLIGHT_RIGHT_LED_GPIO 13 // PWM
 #define HEADLIGHT_LEFT_LED_GPIO 17 // PWM
 #define BREAKING_LED_GPIO 16 // PWM
