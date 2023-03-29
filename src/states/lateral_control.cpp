@@ -7,6 +7,7 @@
 
 void Lateral_Control::entry() {
    context_->ledcontroller->turnOnLateral();
+   printf("entry lateral\n");
 }
 
 void Lateral_Control::exit() {}

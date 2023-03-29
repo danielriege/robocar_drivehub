@@ -356,8 +356,10 @@ private:
     setupCompleteCycleCnt++;
     if (setupCompleteCycleCnt >= 6) {
       setupCompleteTimer->stop();
+      printf("setup completed\n");
       setupCompleteRunning = false;
       if (setupCompleteNext != nullptr) {
+        printf("starting next\n");
         setupCompleteNext();
       }
     }
