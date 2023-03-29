@@ -265,6 +265,8 @@ public:
   void turnOnHazardLights() {
     if (yellowMode == off) {
       yellowMode = hazard;
+      gpioPWM(HEADLIGHT_RIGHT_LED_GPIO, OFF);
+      gpioPWM(HEADLIGHT_LEFT_LED_GPIO, OFF);
       turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
@@ -275,12 +277,15 @@ public:
     turnSignalTimer->stop();
     gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
     gpioWrite(SIGNAL_RIGHT_LED_GPIO, OFF);
+    gpioPWM(HEADLIGHT_RIGHT_LED_GPIO, lastHeadlightBrightness);
+    gpioPWM(HEADLIGHT_LEFT_LED_GPIO, lastHeadlightBrightness);
     yellowMode = off;
   }
 
   void turnOnTurnSignalLeft() {
     if (yellowMode == off) {
       yellowMode = left_blink;
+      gpioPWM(HEADLIGHT_LEFT_LED_GPIO, OFF);
       turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
@@ -290,6 +295,7 @@ public:
   void turnOnTurnSignalRight() {
     if (yellowMode == off) {
       yellowMode = right_blink;
+      gpioPWM(HEADLIGHT_RIGHT_LED_GPIO, OFF);
       turnSignalCycle();
       turnSignalTimer->setInterval(std::bind(&LEDController::turnSignalCycle, this), TURNSIGNAL_BLINK_INTERVAL);
     }
@@ -300,6 +306,8 @@ public:
     turnSignalTimer->stop();
     gpioWrite(SIGNAL_LEFT_LED_GPIO, OFF);
     gpioWrite(SIGNAL_RIGHT_LED_GPIO, OFF);
+    gpioPWM(HEADLIGHT_RIGHT_LED_GPIO, lastHeadlightBrightness);
+    gpioPWM(HEADLIGHT_LEFT_LED_GPIO, lastHeadlightBrightness);
     yellowMode = off;
   }
 
