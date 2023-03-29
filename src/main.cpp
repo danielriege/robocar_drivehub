@@ -151,6 +151,9 @@ int main(int argc, char** argv) {
 
     ledcontroller->turnOnDaylight();
 
+    // workaround
+    context->manualControl();
+
     // watchdog
     while (1) {
         std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL_TIMEOUT_CHECK));

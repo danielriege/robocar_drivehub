@@ -57,6 +57,7 @@
         lateralCycle(); // first start manual so there is a change right away
         blueMode = lateral;
         lateralTimer->setInterval(std::bind(&LEDController::lateralCycle, this), LATERAL_BLINK_INTERVAL);
+        printf("started lateral\n");
       }
     }
   }
@@ -297,10 +298,8 @@
     setupCompleteCycleCnt++;
     if (setupCompleteCycleCnt >= 6) {
       setupCompleteTimer->stop();
-      printf("setup completed\n");
       setupCompleteRunning = false;
       if (setupCompleteNext != nullptr) {
-        printf("starting next\n");
         setupCompleteNext();
       }
     }

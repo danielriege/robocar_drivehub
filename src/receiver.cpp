@@ -21,8 +21,10 @@ void Receiver::uartReceive(uint8_t* data, size_t size) {
     }
     if (analyzePacket() > 0) {
         ReceiverPacket tmp_packet;
-        SumD_to_ReceiverPacket(this->packet, &tmp_packet);
-        packetReceivedCallback(tmp_packet);
+        if (this->packet.state == 1) {
+          SumD_to_ReceiverPacket(this->packet, &tmp_packet);
+          packetReceivedCallback(tmp_packet);
+        }
     }
 }
 

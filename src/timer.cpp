@@ -19,9 +19,11 @@ void Timer::setInterval(std::function<void(void)> function, int interval) {
     t = std::thread([=]() {
         while(active.load()) {
             //std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+            {
             std::unique_lock<std::mutex> lock(m);
             if (cv.wait_for(lock, std::chrono::milliseconds(interval), [&]{return !active.load();})) {
                 return;
+            }
             }
             function();
         }
